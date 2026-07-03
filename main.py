@@ -2,22 +2,16 @@
 main.py
 
 HTTP layer for the mentor-matching agent.
-POST /extract        - takes free text + kind, returns structured fields
-POST /match          - takes a beneficiary profile, returns ranked mentor matches
-GET  /beneficiaries  - returns all beneficiaries from the sheet
-GET  /mentors        - returns all mentors from the sheet
-GET  /matches        - returns all matches from the sheet
-POST /delete-match   - removes a match and restores mentor hours
+Supports reading service account from env var (for Render hosting) or file (for local dev).
 """
 
+import os
+import json
+import base64
+import tempfile
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from extractor import extract_fields
-from matcher import find_matches, get_all_beneficiaries, _read_sheet, _get_sheets_service
-import os
-
-SPREADSHEET_ID = os.environ.get("GOOGLE_SPREADSHEET_ID")
 
 app = FastAPI()
 
@@ -27,6 +21,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Handle service account — from Base64 env var (Render) or file (local)
+def setup_service_account():
+    b64 = os.environ.get("GOOGLE_SERVICE_ACCOUNT_B64")
+    if b64:
+        json_bytes = base64.b64decode(b64)
+        tmp = tempfile.NamedTemporaryFile(mode='wb', suffix='.json', delete=False)
+        tmp.write(json_bytes)
+        tmp.close()
+        os.environ["GOOGLE_SERVICE_ACCOUNT_FILE"] = tmp.name
+    # If no B64, falls back to GOOGLE_SERVICE_ACCOUNT_FILE env var (local dev)
+
+setup_service_account()
+
+from extractor import extract_fields
+from matcher import find_matches, get_all_beneficiaries, _read_sheet, _get_sheets_service
+
+SPREADSHEET_ID = os.environ.get("GOOGLE_SPREADSHEET_ID")
 
 
 class ExtractRequest(BaseModel):
@@ -71,10 +83,6 @@ def handle_get_matches():
 
 @app.post("/delete-match")
 def handle_delete_match(req: DeleteMatchRequest):
-    """
-    Deletes a match row from the Matches sheet and restores the mentor's hours.
-    Uses the Google Sheets API directly with write permissions.
-    """
     from google.oauth2 import service_account
     from googleapiclient.discovery import build
 
@@ -102,7 +110,6 @@ def handle_delete_match(req: DeleteMatchRequest):
             break
 
     if row_to_delete:
-        # Get the sheet ID for Matches tab
         sheet_meta = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
         matches_sheet_id = next(
             s["properties"]["sheetId"] for s in sheet_meta["sheets"]
@@ -116,7 +123,7 @@ def handle_delete_match(req: DeleteMatchRequest):
             }}}]}
         ).execute()
 
-    # 2. Restore mentor hours in Mentors sheet
+    # 2. Restore mentor hours
     mentors_result = service.spreadsheets().values().get(
         spreadsheetId=SPREADSHEET_ID, range="Mentors"
     ).execute()
