@@ -5,116 +5,130 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת חונכים</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 :root {
-  --bg: #faf9f7; --surface: #fff; --border: #e2ddd5; --text: #2b2925;
-  --text-secondary: #6b6760; --accent: #5b6b4f; --accent-hover: #4a5840;
-  --radius: 10px;
+  --bg: #f0ece4; --surface: #ffffff; --surface-2: #faf8f4;
+  --border: #e8e3da; --border-strong: #d4cdc0;
+  --text: #1e1c1a; --text-secondary: #706b63; --text-muted: #9e9890;
+  --accent: #0ea5a0; --accent-light: #e6f7f7; --accent-hover: #0d8f8a;
+  --danger: #c0392b; --danger-bg: #fdf0ee; --danger-border: #f5c0bb;
+  --warning-bg: #fdf6e3; --warning-border: #f0d080; --warning-text: #7a5c12;
+  --success-bg: #edf7ed; --success-border: #a8d4a0; --success-text: #2e5c2e;
+  --radius: 8px; --radius-lg: 12px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
-
-/* Layout */
-.app { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
-.header { margin-bottom: 24px; }
-.header h1 { font-size: 22px; font-weight: 600; }
-.header p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
-
-/* Tabs */
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-.tab-btn { padding: 8px 18px; font-size: 14px; font-family: inherit; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
-
-/* Toolbar */
-.toolbar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
-.toolbar input, .toolbar select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; }
-.toolbar input { flex: 1; }
-
-/* Buttons */
+body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; }
+body::before { content: ''; position: fixed; inset: 0; z-index: -1; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeBlend in='SourceGraphic' mode='multiply'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 200px 200px; pointer-events: none; }
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+.top-bar { background: linear-gradient(135deg, #0c3b3a 0%, #0a4a47 50%, #073d3b 100%); border-bottom: 1px solid rgba(14,165,160,0.25); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 62px; position: sticky; top: 0; z-index: 50; }
+.logo-area { display: flex; align-items: center; gap: 12px; }
+.logo-icon { flex-shrink: 0; filter: drop-shadow(0 2px 8px rgba(14,165,160,0.4)); }
+.logo-name { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: -0.2px; }
+.logo-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+.top-tabs { display: flex; gap: 2px; }
+.tab-btn { padding: 7px 18px; font-size: 13px; font-weight: 500; font-family: inherit; border: none; background: transparent; color: rgba(255,255,255,0.55); cursor: pointer; border-radius: var(--radius); transition: all 0.15s; }
+.tab-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
+.tab-btn.active { background: rgba(14,165,160,0.25); color: #5eead4; border: 1px solid rgba(14,165,160,0.3); }
+.content { flex: 1; max-width: 1000px; margin: 0 auto; width: 100%; padding: 28px 24px; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-title { font-size: 16px; font-weight: 600; }
+.toolbar { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 10px 14px; }
+.toolbar input { flex: 1; border: none; outline: none; font-size: 13px; font-family: inherit; background: transparent; color: var(--text); }
+.toolbar input::placeholder { color: var(--text-muted); }
+.toolbar-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+.toolbar select { border: none; outline: none; font-size: 13px; font-family: inherit; background: transparent; color: var(--text-secondary); cursor: pointer; }
 button { font-family: inherit; cursor: pointer; }
-.btn { padding: 8px 14px; border-radius: 6px; font-size: 13px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
-.btn:hover { background: var(--bg); }
+.btn { padding: 7px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 500; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: background 0.15s; }
+.btn:hover { background: var(--surface-2); }
 .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-.btn-danger { color: #8a2e2e; border-color: #e8a8a8; background: #fdeaea; }
+.btn-primary:disabled { background: var(--text-muted); border-color: var(--text-muted); cursor: not-allowed; }
+.btn-danger { color: var(--danger); border-color: var(--danger-border); background: var(--danger-bg); }
 .btn-sm { padding: 4px 10px; font-size: 12px; }
-
-/* Table */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { text-align: right; padding: 8px 10px; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border); }
-td { padding: 10px 10px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+th { text-align: right; padding: 10px 14px; color: var(--text-muted); font-weight: 500; font-size: 12px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+td { padding: 12px 14px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: var(--bg); }
-
-/* Badges */
-.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
-.badge-red { background: #fdeaea; color: #8a2e2e; }
-.badge-yellow { background: #fdf3e3; color: #7a5c12; }
-.badge-green { background: #eaf3e8; color: #2e5c2e; }
-.badge-blue { background: #e8eef8; color: #2e4a8a; }
-
-/* Hours bar */
-.hours-bar { display: flex; align-items: center; gap: 6px; }
-.hours-track { width: 60px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.hours-fill { height: 100%; background: var(--accent); border-radius: 3px; }
-
-/* Modal overlay */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+tr:hover td { background: var(--surface-2); }
+.td-name { font-weight: 500; }
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 20px; }
+.badge-red { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
+.badge-yellow { background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
+.badge-green { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+.badge-blue { background: #eef2fb; color: #2e4a8a; border: 1px solid #c8d4f0; }
+.hours-bar { display: flex; align-items: center; gap: 8px; }
+.hours-track { width: 56px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.hours-fill { height: 100%; border-radius: 3px; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; align-items: center; justify-content: center; }
 .modal-overlay.open { display: flex; }
-.modal { background: var(--surface); border-radius: 14px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; position: relative; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal { background: var(--surface); border-radius: 16px; padding: 28px; width: 100%; max-width: 540px; max-height: 92vh; overflow-y: auto; box-shadow: var(--shadow-md); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
 .modal-header h2 { font-size: 17px; font-weight: 600; }
-.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary); line-height: 1; }
-
-/* Form inside modal */
+.modal-close { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--text-secondary); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 .form-field { margin-bottom: 12px; }
-.form-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
-.form-field input, .form-field select, .form-field textarea {
-  width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-family: inherit;
-}
+.form-field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.04em; margin-bottom: 5px; }
+.form-field input, .form-field select, .form-field textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; font-family: inherit; background: var(--surface); color: var(--text); }
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: var(--accent); }
 .form-field textarea { min-height: 90px; resize: vertical; }
-
-/* Constraint box */
-.constraint-box { background: #fdf3e3; border: 1px solid #e8c468; border-radius: 8px; padding: 12px; margin: 12px 0; }
-.constraint-box p { font-size: 13px; font-weight: 600; color: #7a5c12; margin-bottom: 6px; }
-.constraint-box label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
-
-/* Loading / error */
-.loading { text-align: center; color: var(--text-secondary); padding: 32px; font-size: 14px; }
-.error-msg { background: #fdeaea; border: 1px solid #e8a8a8; color: #8a2e2e; border-radius: 8px; padding: 12px; font-size: 13px; margin-bottom: 12px; }
-.success-msg { background: #eaf3e8; border: 1px solid #a8d4a0; color: #2e5c2e; border-radius: 8px; padding: 12px; font-size: 13px; }
-
-/* Match cards */
+.constraint-box { background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--radius); padding: 12px 14px; margin: 10px 0; }
+.constraint-box p { font-size: 13px; font-weight: 600; color: var(--warning-text); margin-bottom: 7px; }
+.constraint-box label { display: flex; align-items: center; gap: 7px; font-size: 13px; cursor: pointer; color: var(--warning-text); }
+.loading { text-align: center; color: var(--text-muted); padding: 40px; font-size: 13px; }
+.error-msg { background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger); border-radius: var(--radius); padding: 11px 14px; font-size: 13px; margin-bottom: 12px; }
+.success-msg { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-text); border-radius: var(--radius); padding: 11px 14px; font-size: 13px; }
 .match-cards { display: flex; flex-direction: column; gap: 12px; }
-.match-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.match-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; box-shadow: var(--shadow-sm); transition: border-color 0.15s; }
+.match-card:hover { border-color: var(--accent); }
 .match-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .match-card-name { font-size: 16px; font-weight: 600; }
-.match-score { background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
-.match-reason { font-size: 13px; color: var(--text-secondary); background: var(--bg); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
-.match-details { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 12px; }
-.detail-label { color: var(--text-secondary); }
-.already-matched { background: #fdf3e3; border: 1px solid #e8c468; border-radius: var(--radius); padding: 20px; text-align: center; }
-.already-matched .icon { font-size: 28px; margin-bottom: 8px; }
-.already-matched strong { display: block; font-size: 15px; margin-bottom: 4px; color: #7a5c12; }
-.already-matched span { font-size: 13px; color: #7a5c12; }
-
+.match-score { background: #0ea5a0; color: #fff; font-size: 12px; font-weight: 600; padding: 4px 11px; border-radius: 20px; }
+.match-reason { font-size: 13px; color: var(--text-secondary); background: var(--surface-2); border-radius: var(--radius); padding: 9px 12px; margin-bottom: 12px; line-height: 1.6; }
+.match-details { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 20px; font-size: 12px; margin-bottom: 14px; }
+.detail-label { color: var(--text-muted); }
+.detail-value { color: var(--text); font-weight: 500; }
+.already-matched { background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--radius-lg); padding: 28px; text-align: center; }
+.already-matched .icon { font-size: 32px; margin-bottom: 10px; }
+.already-matched strong { display: block; font-size: 15px; font-weight: 600; color: var(--warning-text); margin-bottom: 5px; }
+.already-matched span { font-size: 13px; color: var(--warning-text); }
+.search-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+.beneficiary-summary { background: var(--surface-2); border-radius: var(--radius); padding: 10px 14px; margin-top: 10px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
 .hidden { display: none; }
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="header">
-    <h1>מערכת חונכים</h1>
-    <p>ניהול חונכים, זכאים ושידוכים</p>
+  <div class="top-bar">
+    <div class="logo-area">
+      <div class="logo-icon">
+        <svg viewBox="0 0 38 38" width="38" height="38" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0ea5a0"/>
+              <stop offset="100%" stop-color="#0d7a76"/>
+            </linearGradient>
+          </defs>
+          <rect width="38" height="38" rx="10" fill="url(#lg)"/>
+          <text x="19" y="26" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="white" letter-spacing="1">NY</text>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-name">מערכת נועם</div>
+        <div class="logo-sub">ניהול חונכים וזכאים</div>
+      </div>
+    </div>
+    <div class="top-tabs">
+      <button class="tab-btn active" onclick="showTab('beneficiaries')">זכאים</button>
+      <button class="tab-btn" onclick="showTab('mentors')">חונכים</button>
+      <button class="tab-btn" onclick="showTab('matches')">שידוכים</button>
+      <button class="tab-btn" onclick="showTab('matching')">התאמה</button>
+    </div>
   </div>
-
-  <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('beneficiaries')">זכאים</button>
-    <button class="tab-btn" onclick="showTab('mentors')">חונכים</button>
-    <button class="tab-btn" onclick="showTab('matches')">שידוכים</button>
-    <button class="tab-btn" onclick="showTab('matching')">התאמה</button>
-  </div>
+  <div class="content">
 
   <!-- BENEFICIARIES TAB -->
   <div id="tab-beneficiaries">
@@ -133,14 +147,14 @@ tr:hover td { background: var(--bg); }
       </select>
       <button class="btn btn-primary" onclick="openAddBeneficiary()">+ הוסף זכאי</button>
     </div>
-    <div class="table-wrap">
+    <div class="card"><div class="table-wrap">
       <table>
         <thead><tr>
           <th>שם</th><th>גיל</th><th>טלפון</th><th>אזור</th><th>דחיפות</th><th>שעות</th><th>מצב</th><th></th>
         </tr></thead>
         <tbody id="beneficiaries-body"><tr><td colspan="8" class="loading">טוען...</td></tr></tbody>
       </table>
-    </div>
+    </div></div>
   </div>
 
   <!-- MENTORS TAB -->
@@ -154,26 +168,26 @@ tr:hover td { background: var(--bg); }
       </select>
       <button class="btn btn-primary" onclick="openAddMentor()">+ הוסף חונך</button>
     </div>
-    <div class="table-wrap">
+    <div class="card"><div class="table-wrap">
       <table>
         <thead><tr>
           <th>שם</th><th>גיל</th><th>מגדר</th><th>טלפון</th><th>אזור</th><th>שעות פנויות</th><th>יכולות</th>
         </tr></thead>
         <tbody id="mentors-body"><tr><td colspan="7" class="loading">טוען...</td></tr></tbody>
       </table>
-    </div>
+    </div></div>
   </div>
 
   <!-- MATCHES TAB -->
   <div id="tab-matches" class="hidden">
-    <div class="table-wrap">
+    <div class="card"><div class="table-wrap">
       <table>
         <thead><tr>
           <th>תאריך</th><th>זכאי</th><th>חונך</th><th>שעות</th><th></th>
         </tr></thead>
         <tbody id="matches-body"><tr><td colspan="5" class="loading">טוען...</td></tr></tbody>
       </table>
-    </div>
+    </div></div>
   </div>
 
   <!-- MATCHING TAB -->
@@ -184,7 +198,7 @@ tr:hover td { background: var(--bg); }
         <input type="text" id="match-search" placeholder="הקלידי שם לחיפוש..." oninput="filterMatchDropdown()" onfocus="openMatchDropdown()" autocomplete="off" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit">
         <div id="match-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:200px;overflow-y:auto;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,0.08)"></div>
       </div>
-      <div id="match-beneficiary-summary" style="display:none;background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px;color:var(--text-secondary)"></div>
+      <div id="match-beneficiary-summary" class="beneficiary-summary" style="display:none"></div>
       <button class="btn btn-primary" id="run-match-btn" onclick="runMatch()" disabled style="width:100%;margin-top:12px">מצאי חונכים מתאימים</button>
     </div>
     <div id="matching-loading" class="loading hidden">מחפשת התאמות...</div>
@@ -195,6 +209,8 @@ tr:hover td { background: var(--bg); }
     </div>
   </div>
 </div>
+
+  </div><!-- end .content -->
 
 <!-- ADD BENEFICIARY MODAL -->
 <div class="modal-overlay" id="modal-add-beneficiary">
@@ -311,7 +327,7 @@ const EXTRACT_URL = "https://nny.app.n8n.cloud/webhook/intake-beneficiary";
 const SAVE_BENEFICIARY_URL = "https://nny.app.n8n.cloud/webhook/save-beneficiary";
 const SAVE_MENTOR_URL = "https://nny.app.n8n.cloud/webhook/save-mentor";
 const CREATE_MATCH_URL = "https://nny.app.n8n.cloud/webhook/create-match";
-const AGENT_URL = "http://localhost:8001";
+const AGENT_URL = "https://mentor-matching-r31w.onrender.com";
 
 let allBeneficiaries = [], allMentors = [], allMatches = [], currentMatches = [], selectedBeneficiary = null;
 let pendingDeleteMatch = null;
@@ -320,7 +336,7 @@ let pendingDeleteMatch = null;
 function showTab(name) {
   ['beneficiaries','mentors','matches','matching'].forEach(t => {
     document.getElementById('tab-'+t).classList.toggle('hidden', t !== name);
-    document.querySelectorAll('.tab-btn')[['beneficiaries','mentors','matches','matching'].indexOf(t)].classList.toggle('active', t === name);
+    document.querySelectorAll('.top-tabs .tab-btn')[['beneficiaries','mentors','matches','matching'].indexOf(t)].classList.toggle('active', t === name);
   });
   if (name === 'beneficiaries') loadBeneficiaries();
   if (name === 'mentors') loadMentors();
