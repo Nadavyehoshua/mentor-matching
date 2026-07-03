@@ -430,7 +430,7 @@ function renderBeneficiaries() {
         <td>${urgBadge}</td>
         <td>${b.WeeklyHoursNeeded||''}</td>
         <td>${statusBadge}</td>
-        <td>${actionBtn}</td>
+        <td style="display:flex;gap:6px">${actionBtn}<button class="btn btn-sm btn-danger" onclick="confirmDeletePerson('beneficiary','${b.Name}',${isMatched})">מחק</button></td>
       </tr>`;
     }).join('');
 }
