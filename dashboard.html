@@ -101,6 +101,34 @@ tr:hover td { background: var(--surface-2); }
 </style>
 </head>
 <body>
+<div id="login-screen" style="position:fixed;inset:0;background:#0a4a47;display:flex;align-items:center;justify-content:center;z-index:9999">
+  <div style="background:white;border-radius:16px;padding:40px;width:320px;text-align:center;font-family:Inter,Arial,sans-serif">
+    <div style="width:50px;height:50px;background:linear-gradient(135deg,#0ea5a0,#0d7a76);border-radius:12px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;font-weight:700">NY</div>
+    <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;color:#1e1c1a">מערכת נועם</h2>
+    <p style="font-size:13px;color:#888;margin-bottom:24px">הזן סיסמה להמשך</p>
+    <input type="password" id="pass-input" placeholder="סיסמה" dir="rtl" style="width:100%;padding:10px 14px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;text-align:center;margin-bottom:12px;font-family:inherit;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkPass()">
+    <button onclick="checkPass()" style="width:100%;padding:11px;background:#0ea5a0;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">כניסה</button>
+    <p id="pass-error" style="color:#c0392b;font-size:13px;margin-top:10px;display:none">סיסמה שגויה</p>
+  </div>
+</div>
+<script>
+function checkPass(){
+  const p = document.getElementById('pass-input').value;
+  if(p === 'noam2310'){
+    document.getElementById('login-screen').style.display = 'none';
+    sessionStorage.setItem('auth','1');
+  } else {
+    document.getElementById('pass-error').style.display = 'block';
+  }
+}
+if(sessionStorage.getItem('auth') === '1'){
+  document.addEventListener('DOMContentLoaded', function(){
+    var s = document.getElementById('login-screen');
+    if(s) s.style.display = 'none';
+  });
+}
+</script>
+
 <div class="app">
   <div class="top-bar">
     <div class="logo-area">
