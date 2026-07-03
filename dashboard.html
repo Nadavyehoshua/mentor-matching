@@ -750,8 +750,38 @@ async function saveMentor() {
 }
 
 // ─── INIT ───
-loadBeneficiaries();
-loadMatches();
+async function wakeUpServer() {
+  try {
+    const res = await fetch(AGENT_URL + '/health');
+    if (res.ok) return true;
+  } catch(e) { return false; }
+}
+
+async function initApp() {
+  // Show loading state
+  document.getElementById('beneficiaries-body').innerHTML = '<tr><td colspan="8" class="loading">מחכה לשרת... (עד 30 שניות)</td></tr>';
+  
+  // Try to wake up server
+  let awake = false;
+  for (let i = 0; i < 6; i++) {
+    awake = await wakeUpServer();
+    if (awake) break;
+    await new Promise(r => setTimeout(r, 5000));
+  }
+  
+  if (!awake) {
+    document.getElementById('beneficiaries-body').innerHTML = '<tr><td colspan="8" class="loading">השרת לא מגיב — נסה לרענן את הדף</td></tr>';
+    return;
+  }
+  
+  loadBeneficiaries();
+  loadMatches();
+  
+  // Keep-alive ping every 10 minutes
+  setInterval(() => fetch(AGENT_URL + '/health').catch(() => {}), 10 * 60 * 1000);
+}
+
+initApp();
 </script>
 </body>
 </html>
