@@ -551,18 +551,30 @@ async function runMatch() {
   document.getElementById('matching-loading').classList.remove('hidden');
   document.getElementById('matching-results').classList.add('hidden');
   document.getElementById('matching-error').classList.add('hidden');
-  try {
-    const res = await fetch(AGENT_URL + '/match', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ beneficiary: selectedBeneficiary })
-    });
-    const data = await res.json();
-    document.getElementById('matching-loading').classList.add('hidden');
-    renderMatchResults(data);
-  } catch(e) {
-    document.getElementById('matching-loading').classList.add('hidden');
-    document.getElementById('matching-error').textContent = 'שגיאה: '+e.message;
-    document.getElementById('matching-error').classList.remove('hidden');
+  
+  // Try up to 3 times with 5 second delay (handles server wake-up)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await fetch(AGENT_URL + '/match', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ beneficiary: selectedBeneficiary })
+      });
+      if (!res.ok) throw new Error('שגיאת שרת (' + res.status + ')');
+      const data = await res.json();
+      document.getElementById('matching-loading').classList.add('hidden');
+      renderMatchResults(data);
+      return;
+    } catch(e) {
+      if (attempt < 3) {
+        document.getElementById('matching-loading').querySelector('p') && 
+          (document.getElementById('matching-loading').querySelector('p').textContent = 'השרת מתעורר... (' + attempt + '/3)');
+        await new Promise(r => setTimeout(r, 5000));
+      } else {
+        document.getElementById('matching-loading').classList.add('hidden');
+        document.getElementById('matching-error').textContent = 'שגיאה: ' + e.message + ' — נסה שוב';
+        document.getElementById('matching-error').classList.remove('hidden');
+      }
+    }
   }
 }
 
