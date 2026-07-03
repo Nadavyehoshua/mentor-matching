@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>התאמת חונכים</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --surface: #ffffff;
+    --border: #e2ddd5;
+    --text: #2b2925;
+    --text-secondary: #6b6760;
+    --accent: #5b6b4f;
+    --accent-hover: #4a5840;
+    --radius: 10px;
+    --card-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 32px 16px;
+    line-height: 1.6;
+  }
+
+  .container { max-width: 640px; margin: 0 auto; }
+
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  .subtitle { color: var(--text-secondary); font-size: 14px; margin: 0 0 28px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+
+  .search-wrapper { position: relative; margin-bottom: 12px; }
+
+  .search-wrapper input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+
+  .search-wrapper input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0; left: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: var(--card-shadow);
+    display: none;
+  }
+
+  .dropdown.open { display: block; }
+
+  .dropdown-item {
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .dropdown-item:last-child { border-bottom: none; }
+  .dropdown-item:hover { background: var(--bg); }
+  .dropdown-item.selected { background: #eef1eb; font-weight: 600; }
+
+  .beneficiary-summary {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  .beneficiary-summary.visible { display: block; }
+  .beneficiary-summary strong { color: var(--text); }
+
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { background: #b8b3a8; cursor: not-allowed; }
+
+  .loading {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    padding: 24px;
+  }
+
+  .error-box {
+    background: #fdeaea;
+    border: 1px solid #e8a8a8;
+    color: #8a2e2e;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .results-header {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .results-header strong { color: var(--text); }
+
+  .no-results {
+    text-align: center;
+    padding: 32px;
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  .no-results .icon { font-size: 32px; margin-bottom: 8px; }
+
+  /* Mentor cards */
+  .mentor-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    box-shadow: var(--card-shadow);
+    transition: border-color 0.15s;
+  }
+
+  .mentor-card:hover { border-color: var(--accent); }
+
+  .btn-match {
+    margin-top: 14px;
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-match:hover { background: var(--accent-hover); }
+  .btn-match:disabled { background: #b8b3a8; cursor: not-allowed; }
+
+  .match-success {
+    margin-top: 10px;
+    background: #eaf3e8;
+    border: 1px solid #a8d4a0;
+    color: #2e5c2e;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    text-align: center;
+    display: none;
+  }
+
+  .mentor-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .mentor-name {
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .score-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .match-reason {
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: #f0f3ee;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .mentor-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+    font-size: 13px;
+  }
+
+  .detail-item { display: flex; gap: 6px; }
+  .detail-label { color: var(--text-secondary); min-width: 50px; }
+  .detail-value { color: var(--text); }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>התאמת חונכים</h1>
+  <p class="subtitle">בחרי זכאי ומצאי את החונכים המתאימים ביותר.</p>
+
+  <div class="card">
+    <label>בחירת זכאי</label>
+
+    <div class="search-wrapper">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="הקלידי שם לחיפוש..."
+        oninput="filterDropdown()"
+        onfocus="openDropdown()"
+        autocomplete="off"
+      >
+      <div class="dropdown" id="dropdown"></div>
+    </div>
+
+    <div class="beneficiary-summary" id="beneficiary-summary"></div>
+
+    <button class="btn-primary" id="match-btn" onclick="runMatch()" disabled>
+      מצאי חונכים מתאימים
+    </button>
+  </div>
+
+  <div id="step-loading" class="card hidden">
+    <p class="loading">מחפשת התאמות...</p>
+  </div>
+
+  <div id="step-error" class="hidden">
+    <div class="error-box" id="error-message"></div>
+  </div>
+
+  <div id="step-results" class="hidden">
+    <div class="results-header" id="results-header"></div>
+    <div id="mentor-cards"></div>
+  </div>
+</div>
+
+<script>
+  const BENEFICIARIES_URL = "http://localhost:8001/beneficiaries";
+  const MATCH_URL = "http://localhost:8001/match";
+  const CREATE_MATCH_URL = "https://nny.app.n8n.cloud/webhook/create-match";
+
+  let allBeneficiaries = [];
+  let selectedBeneficiary = null;
+  let currentMatches = [];
+
+  // Load beneficiaries on page load
+  async function loadBeneficiaries() {
+    try {
+      const res = await fetch(BENEFICIARIES_URL);
+      allBeneficiaries = await res.json();
+      renderDropdown(allBeneficiaries);
+    } catch (err) {
+      document.getElementById("error-message").textContent =
+        "לא הצלחנו לטעון את רשימת הזכאים: " + err.message;
+      document.getElementById("step-error").classList.remove("hidden");
+    }
+  }
+
+  function renderDropdown(items) {
+    const dropdown = document.getElementById("dropdown");
+    dropdown.innerHTML = "";
+    if (items.length === 0) {
+      dropdown.innerHTML = '<div class="dropdown-item" style="color:var(--text-secondary)">לא נמצאו תוצאות</div>';
+      return;
+    }
+    items.forEach((b, i) => {
+      const div = document.createElement("div");
+      div.className = "dropdown-item" + (b === selectedBeneficiary ? " selected" : "");
+      div.textContent = b.Name + (b.Age ? " · גיל " + b.Age : "") + (b.Region ? " · " + b.Region : "");
+      div.onclick = () => selectBeneficiary(b);
+      dropdown.appendChild(div);
+    });
+  }
+
+  function filterDropdown() {
+    const query = document.getElementById("search-input").value.trim().toLowerCase();
+    const filtered = allBeneficiaries.filter(b =>
+      (b.Name || "").toLowerCase().includes(query) ||
+      (b.Region || "").toLowerCase().includes(query)
+    );
+    renderDropdown(filtered);
+    openDropdown();
+  }
+
+  function openDropdown() {
+    document.getElementById("dropdown").classList.add("open");
+  }
+
+  function closeDropdown() {
+    setTimeout(() => {
+      document.getElementById("dropdown").classList.remove("open");
+    }, 150);
+  }
+
+  document.getElementById("search-input").addEventListener("blur", closeDropdown);
+
+  function selectBeneficiary(b) {
+    selectedBeneficiary = b;
+    document.getElementById("search-input").value = b.Name;
+    document.getElementById("dropdown").classList.remove("open");
+
+    // Show summary
+    const summary = document.getElementById("beneficiary-summary");
+    const parts = [
+      b.Age ? "גיל " + b.Age : null,
+      b.Gender || null,
+      b.Region || null,
+      b.Urgency ? "דחיפות: " + b.Urgency : null,
+      b.MentorGenderRestriction ? "אילוץ: " + formatRestriction(b.MentorGenderRestriction) : null,
+    ].filter(Boolean);
+
+    summary.innerHTML = "<strong>" + b.Name + "</strong> · " + parts.join(" · ");
+    if (b.NeedsSummary) {
+      summary.innerHTML += "<br><span style='margin-top:4px;display:block'>" + b.NeedsSummary + "</span>";
+    }
+    summary.classList.add("visible");
+
+    document.getElementById("match-btn").disabled = false;
+
+    // Clear previous results
+    document.getElementById("step-results").classList.add("hidden");
+    document.getElementById("step-error").classList.add("hidden");
+  }
+
+  function formatRestriction(r) {
+    if (r === "male_only") return "רק חונך גבר";
+    if (r === "female_only") return "רק חונכת אישה";
+    return r;
+  }
+
+  async function runMatch() {
+    if (!selectedBeneficiary) return;
+
+    document.getElementById("step-loading").classList.remove("hidden");
+    document.getElementById("step-results").classList.add("hidden");
+    document.getElementById("step-error").classList.add("hidden");
+
+    try {
+      const res = await fetch(MATCH_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ beneficiary: selectedBeneficiary })
+      });
+
+      if (!res.ok) throw new Error("שגיאת שרת (" + res.status + ")");
+
+      const data = await res.json();
+      document.getElementById("step-loading").classList.add("hidden");
+      renderResults(data);
+
+    } catch (err) {
+      document.getElementById("step-loading").classList.add("hidden");
+      document.getElementById("error-message").textContent =
+        "שגיאה בחיפוש התאמות: " + err.message;
+      document.getElementById("step-error").classList.remove("hidden");
+    }
+  }
+
+  function renderResults(data) {
+    const resultsEl = document.getElementById("step-results");
+    const headerEl = document.getElementById("results-header");
+    const cardsEl = document.getElementById("mentor-cards");
+
+    cardsEl.innerHTML = "";
+
+    // Check if already matched
+    if (data.already_matched) {
+      headerEl.innerHTML = "";
+      cardsEl.innerHTML = `
+        <div style="background:#fdf3e3;border:1px solid #e8c468;border-radius:10px;padding:20px;text-align:center">
+          <div style="font-size:24px;margin-bottom:8px">🔒</div>
+          <div style="font-weight:600;font-size:15px;margin-bottom:6px">זכאי זה כבר משודך</div>
+          <div style="font-size:13px;color:#7a5c12">משודך עם: <strong>${data.existing_mentor}</strong></div>
+          <div style="font-size:12px;color:#7a5c12;margin-top:6px">לביטול השידוך יש לפנות למנהל המערכת</div>
+        </div>`;
+      resultsEl.classList.remove("hidden");
+      return;
+    }
+
+    if (data.matches.length === 0) {
+      headerEl.innerHTML = "";
+      cardsEl.innerHTML = `
+        <div class="no-results">
+          <div class="icon">🔍</div>
+          <div>לא נמצאו חונכים מתאימים לזכאי זה.</div>
+          <div style="margin-top:6px;font-size:12px">
+            ${data.filtered_out > 0 ? data.filtered_out + " חונכים סוננו בגלל אילוצים קשיחים." : ""}
+          </div>
+        </div>`;
+    } else {
+      headerEl.innerHTML =
+        "נמצאו <strong>" + data.matches.length + "</strong> חונכים מתאימים" +
+        (data.filtered_out > 0 ? " · " + data.filtered_out + " סוננו" : "") +
+        " · ממוינים לפי התאמה";
+
+      currentMatches = data.matches;
+
+      data.matches.forEach((mentor, i) => {
+        const card = document.createElement("div");
+        card.className = "mentor-card";
+        const mentors = data.matches;
+        card.innerHTML = `
+          <div class="mentor-card-header">
+            <div class="mentor-name">${mentor.Name || "ללא שם"}</div>
+            <div class="score-badge">התאמה ${mentor.match_score}/10</div>
+          </div>
+          <div class="match-reason">${mentor.match_reason || ""}</div>
+          <div class="mentor-details">
+            ${mentor.Age ? `<div class="detail-item"><span class="detail-label">גיל</span><span class="detail-value">${mentor.Age}</span></div>` : ""}
+            ${mentor.Gender ? `<div class="detail-item"><span class="detail-label">מגדר</span><span class="detail-value">${mentor.Gender}</span></div>` : ""}
+            ${mentor.Region ? `<div class="detail-item"><span class="detail-label">אזור</span><span class="detail-value">${mentor.Region}</span></div>` : ""}
+            ${mentor.Phone ? `<div class="detail-item"><span class="detail-label">טלפון</span><span class="detail-value">${mentor.Phone}</span></div>` : ""}
+            ${mentor.WeeklyHoursAvailable ? `<div class="detail-item"><span class="detail-label">שעות פנויות</span><span class="detail-value">${parseFloat(mentor.WeeklyHoursAvailable||0) - parseFloat(mentor.WeeklyHoursUsed||0)} מתוך ${mentor.WeeklyHoursAvailable}</span></div>` : ""}
+            ${mentor.Availability ? `<div class="detail-item"><span class="detail-label">זמינות</span><span class="detail-value">${mentor.Availability}</span></div>` : ""}
+            ${mentor.Skills ? `<div class="detail-item"><span class="detail-label">יכולות</span><span class="detail-value">${mentor.Skills}</span></div>` : ""}
+            ${mentor.Hobbies ? `<div class="detail-item"><span class="detail-label">תחביבים</span><span class="detail-value">${mentor.Hobbies}</span></div>` : ""}
+          </div>
+          <button class="btn-match" onclick="createMatch(currentMatches[${i}], selectedBeneficiary, this, this.nextElementSibling)">שדך</button>
+          <div class="match-success"></div>
+        `;
+        cardsEl.appendChild(card);
+      });
+    }
+
+    resultsEl.classList.remove("hidden");
+  }
+
+  async function createMatch(mentor, beneficiary, btnEl, successEl) {
+    btnEl.disabled = true;
+    btnEl.textContent = "משדך...";
+
+    const hoursAllocated = parseFloat(beneficiary.WeeklyHoursNeeded || 0);
+    const hoursUsed = parseFloat(mentor.WeeklyHoursUsed || 0);
+    const newHoursUsed = hoursUsed + hoursAllocated;
+
+    try {
+      const res = await fetch(CREATE_MATCH_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          beneficiary_name: beneficiary.Name,
+          mentor_name: mentor.Name,
+          hours_allocated: hoursAllocated,
+          new_hours_used: newHoursUsed,
+          notes: ""
+        })
+      });
+
+      if (!res.ok) throw new Error("שגיאת שרת (" + res.status + ")");
+
+      btnEl.style.display = "none";
+      successEl.style.display = "block";
+      successEl.textContent = "✓ שודך בהצלחה! " + mentor.Name + " ← " + beneficiary.Name;
+
+    } catch (err) {
+      btnEl.disabled = false;
+      btnEl.textContent = "שדך";
+      alert("שגיאה בשידוך: " + err.message);
+    }
+  }
+
+  // Init
+  loadBeneficiaries();
+</script>
+
+</body>
+</html>

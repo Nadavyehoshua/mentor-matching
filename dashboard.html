@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מערכת חונכים</title>
+<style>
+:root {
+  --bg: #faf9f7; --surface: #fff; --border: #e2ddd5; --text: #2b2925;
+  --text-secondary: #6b6760; --accent: #5b6b4f; --accent-hover: #4a5840;
+  --radius: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+/* Layout */
+.app { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+.header { margin-bottom: 24px; }
+.header h1 { font-size: 22px; font-weight: 600; }
+.header p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.tab-btn { padding: 8px 18px; font-size: 14px; font-family: inherit; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+/* Toolbar */
+.toolbar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+.toolbar input, .toolbar select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; }
+.toolbar input { flex: 1; }
+
+/* Buttons */
+button { font-family: inherit; cursor: pointer; }
+.btn { padding: 8px 14px; border-radius: 6px; font-size: 13px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.btn:hover { background: var(--bg); }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-danger { color: #8a2e2e; border-color: #e8a8a8; background: #fdeaea; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* Table */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: right; padding: 8px 10px; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border); }
+td { padding: 10px 10px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg); }
+
+/* Badges */
+.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+.badge-red { background: #fdeaea; color: #8a2e2e; }
+.badge-yellow { background: #fdf3e3; color: #7a5c12; }
+.badge-green { background: #eaf3e8; color: #2e5c2e; }
+.badge-blue { background: #e8eef8; color: #2e4a8a; }
+
+/* Hours bar */
+.hours-bar { display: flex; align-items: center; gap: 6px; }
+.hours-track { width: 60px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.hours-fill { height: 100%; background: var(--accent); border-radius: 3px; }
+
+/* Modal overlay */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: 14px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; position: relative; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-header h2 { font-size: 17px; font-weight: 600; }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary); line-height: 1; }
+
+/* Form inside modal */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-field { margin-bottom: 12px; }
+.form-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.form-field input, .form-field select, .form-field textarea {
+  width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-family: inherit;
+}
+.form-field textarea { min-height: 90px; resize: vertical; }
+
+/* Constraint box */
+.constraint-box { background: #fdf3e3; border: 1px solid #e8c468; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.constraint-box p { font-size: 13px; font-weight: 600; color: #7a5c12; margin-bottom: 6px; }
+.constraint-box label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+
+/* Loading / error */
+.loading { text-align: center; color: var(--text-secondary); padding: 32px; font-size: 14px; }
+.error-msg { background: #fdeaea; border: 1px solid #e8a8a8; color: #8a2e2e; border-radius: 8px; padding: 12px; font-size: 13px; margin-bottom: 12px; }
+.success-msg { background: #eaf3e8; border: 1px solid #a8d4a0; color: #2e5c2e; border-radius: 8px; padding: 12px; font-size: 13px; }
+
+/* Match cards */
+.match-cards { display: flex; flex-direction: column; gap: 12px; }
+.match-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.match-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.match-card-name { font-size: 16px; font-weight: 600; }
+.match-score { background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.match-reason { font-size: 13px; color: var(--text-secondary); background: var(--bg); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
+.match-details { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 12px; }
+.detail-label { color: var(--text-secondary); }
+.already-matched { background: #fdf3e3; border: 1px solid #e8c468; border-radius: var(--radius); padding: 20px; text-align: center; }
+.already-matched .icon { font-size: 28px; margin-bottom: 8px; }
+.already-matched strong { display: block; font-size: 15px; margin-bottom: 4px; color: #7a5c12; }
+.already-matched span { font-size: 13px; color: #7a5c12; }
+
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>מערכת חונכים</h1>
+    <p>ניהול חונכים, זכאים ושידוכים</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('beneficiaries')">זכאים</button>
+    <button class="tab-btn" onclick="showTab('mentors')">חונכים</button>
+    <button class="tab-btn" onclick="showTab('matches')">שידוכים</button>
+    <button class="tab-btn" onclick="showTab('matching')">התאמה</button>
+  </div>
+
+  <!-- BENEFICIARIES TAB -->
+  <div id="tab-beneficiaries">
+    <div class="toolbar">
+      <input type="text" id="b-search" placeholder="חיפוש לפי שם..." oninput="renderBeneficiaries()">
+      <select id="b-filter-urgency" onchange="renderBeneficiaries()">
+        <option value="">כל הדחיפויות</option>
+        <option value="high">דחוף</option>
+        <option value="medium">בינוני</option>
+        <option value="low">נמוך</option>
+      </select>
+      <select id="b-filter-status" onchange="renderBeneficiaries()">
+        <option value="">כל המצבים</option>
+        <option value="waiting">ממתין לשידוך</option>
+        <option value="matched">משודך</option>
+      </select>
+      <button class="btn btn-primary" onclick="openAddBeneficiary()">+ הוסף זכאי</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>שם</th><th>גיל</th><th>טלפון</th><th>אזור</th><th>דחיפות</th><th>שעות</th><th>מצב</th><th></th>
+        </tr></thead>
+        <tbody id="beneficiaries-body"><tr><td colspan="8" class="loading">טוען...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MENTORS TAB -->
+  <div id="tab-mentors" class="hidden">
+    <div class="toolbar">
+      <input type="text" id="m-search" placeholder="חיפוש לפי שם..." oninput="renderMentors()">
+      <select id="m-filter-gender" onchange="renderMentors()">
+        <option value="">כל המגדרים</option>
+        <option value="male">גבר</option>
+        <option value="female">אישה</option>
+      </select>
+      <button class="btn btn-primary" onclick="openAddMentor()">+ הוסף חונך</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>שם</th><th>גיל</th><th>מגדר</th><th>טלפון</th><th>אזור</th><th>שעות פנויות</th><th>יכולות</th>
+        </tr></thead>
+        <tbody id="mentors-body"><tr><td colspan="7" class="loading">טוען...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MATCHES TAB -->
+  <div id="tab-matches" class="hidden">
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>תאריך</th><th>זכאי</th><th>חונך</th><th>שעות</th><th></th>
+        </tr></thead>
+        <tbody id="matches-body"><tr><td colspan="5" class="loading">טוען...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MATCHING TAB -->
+  <div id="tab-matching" class="hidden">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px">
+      <label style="font-size:14px;font-weight:600;display:block;margin-bottom:10px">בחירת זכאי</label>
+      <div style="position:relative">
+        <input type="text" id="match-search" placeholder="הקלידי שם לחיפוש..." oninput="filterMatchDropdown()" onfocus="openMatchDropdown()" autocomplete="off" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit">
+        <div id="match-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:200px;overflow-y:auto;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,0.08)"></div>
+      </div>
+      <div id="match-beneficiary-summary" style="display:none;background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px;color:var(--text-secondary)"></div>
+      <button class="btn btn-primary" id="run-match-btn" onclick="runMatch()" disabled style="width:100%;margin-top:12px">מצאי חונכים מתאימים</button>
+    </div>
+    <div id="matching-loading" class="loading hidden">מחפשת התאמות...</div>
+    <div id="matching-error" class="error-msg hidden"></div>
+    <div id="matching-results" class="hidden">
+      <div id="matching-header" style="font-size:13px;color:var(--text-secondary);margin-bottom:12px"></div>
+      <div id="match-cards" class="match-cards"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD BENEFICIARY MODAL -->
+<div class="modal-overlay" id="modal-add-beneficiary">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="add-b-modal-title">הוספת זכאי חדש</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-beneficiary')">×</button>
+    </div>
+    <div id="add-b-step-input">
+      <div class="form-field">
+        <label>תיאור חופשי</label>
+        <textarea id="b-description" placeholder="לדוגמה: דנה, בת 16, מתמודדת עם חרדות, מתגוררת בחדרה, צריכה חונכת אישה, 4 שעות בשבוע..."></textarea>
+      </div>
+      <div id="add-b-error" class="error-msg hidden"></div>
+      <button class="btn btn-primary" style="width:100%" onclick="extractBeneficiary()">חלצי פרטים</button>
+    </div>
+    <div id="add-b-step-confirm" class="hidden">
+      <div class="form-row">
+        <div class="form-field"><label>שם</label><input type="text" id="b-name"></div>
+        <div class="form-field"><label>גיל</label><input type="number" id="b-age"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>מגדר</label><input type="text" id="b-gender"></div>
+        <div class="form-field"><label>טלפון</label><input type="text" id="b-phone"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>אזור / ישוב</label><input type="text" id="b-region"></div>
+        <div class="form-field"><label>שעות שבועיות נדרשות</label><input type="number" id="b-hours"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>דחיפות</label><input type="text" id="b-urgency"></div>
+        <div class="form-field"><label>תקציר הצורך</label><input type="text" id="b-needs-summary"></div>
+      </div>
+      <div class="form-field">
+        <label>אילוץ גיל חונך</label>
+        <select id="b-age-restriction">
+          <option value="">ללא הגבלת גיל</option>
+          <option value="young">רק חונך צעיר (עד 35)</option>
+          <option value="older">רק חונך מבוגר (מעל 35)</option>
+        </select>
+      </div>
+      <div id="b-constraint-section" class="hidden">
+        <div class="constraint-box">
+          <p id="b-constraint-text"></p>
+          <label><input type="checkbox" id="b-constraint-confirm"> מאשרת את האילוץ הזה</label>
+        </div>
+      </div>
+      <div id="b-notes" style="font-size:12px;color:var(--text-secondary);margin:8px 0"></div>
+      <div id="add-b-save-error" class="error-msg hidden"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" style="flex:1" onclick="showStep('add-b','input')">חזרה</button>
+        <button class="btn btn-primary" id="b-save-btn" style="flex:2" onclick="saveBeneficiary()">אשרי ושמרי</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MENTOR MODAL -->
+<div class="modal-overlay" id="modal-add-mentor">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>הוספת חונך חדש</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-mentor')">×</button>
+    </div>
+    <div id="add-m-step-input">
+      <div class="form-field">
+        <label>תיאור חופשי</label>
+        <textarea id="m-description" placeholder="לדוגמה: יוסי, בן 28, גבר, טלפון 052-1234567, מתל אביב. פנוי 6 שעות בשבוע..."></textarea>
+      </div>
+      <div id="add-m-error" class="error-msg hidden"></div>
+      <button class="btn btn-primary" style="width:100%" onclick="extractMentor()">חלצי פרטים</button>
+    </div>
+    <div id="add-m-step-confirm" class="hidden">
+      <div class="form-row">
+        <div class="form-field"><label>שם</label><input type="text" id="m-name"></div>
+        <div class="form-field"><label>גיל</label><input type="number" id="m-age"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>מגדר</label><input type="text" id="m-gender"></div>
+        <div class="form-field"><label>טלפון</label><input type="text" id="m-phone"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>אזור / ישוב</label><input type="text" id="m-region"></div>
+        <div class="form-field"><label>שעות שבועיות זמינות</label><input type="number" id="m-hours"></div>
+      </div>
+      <div class="form-field"><label>תחומי יכולות</label><input type="text" id="m-skills"></div>
+      <div class="form-field"><label>זמינות (ימים/שעות)</label><input type="text" id="m-availability"></div>
+      <div class="form-field"><label>תחביבים</label><input type="text" id="m-hobbies"></div>
+      <div id="m-notes" style="font-size:12px;color:var(--text-secondary);margin:8px 0"></div>
+      <div id="add-m-save-error" class="error-msg hidden"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" style="flex:1" onclick="showStep('add-m','input')">חזרה</button>
+        <button class="btn btn-primary" id="m-save-btn" style="flex:2" onclick="saveMentor()">אשרי ושמרי</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE MATCH MODAL -->
+<div class="modal-overlay" id="modal-confirm-delete">
+  <div class="modal" style="max-width:400px;text-align:center">
+    <div style="font-size:28px;margin-bottom:12px">⚠️</div>
+    <h2 style="font-size:16px;margin-bottom:8px">ביטול שידוך</h2>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:20px" id="delete-match-text"></p>
+    <div style="display:flex;gap:8px">
+      <button class="btn" style="flex:1" onclick="closeModal('modal-confirm-delete')">ביטול</button>
+      <button class="btn btn-danger" style="flex:1" id="confirm-delete-btn">בטל שידוך</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const EXTRACT_URL = "https://nny.app.n8n.cloud/webhook/intake-beneficiary";
+const SAVE_BENEFICIARY_URL = "https://nny.app.n8n.cloud/webhook/save-beneficiary";
+const SAVE_MENTOR_URL = "https://nny.app.n8n.cloud/webhook/save-mentor";
+const CREATE_MATCH_URL = "https://nny.app.n8n.cloud/webhook/create-match";
+const AGENT_URL = "http://localhost:8001";
+
+let allBeneficiaries = [], allMentors = [], allMatches = [], currentMatches = [], selectedBeneficiary = null;
+let pendingDeleteMatch = null;
+
+// ─── TABS ───
+function showTab(name) {
+  ['beneficiaries','mentors','matches','matching'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('hidden', t !== name);
+    document.querySelectorAll('.tab-btn')[['beneficiaries','mentors','matches','matching'].indexOf(t)].classList.toggle('active', t === name);
+  });
+  if (name === 'beneficiaries') loadBeneficiaries();
+  if (name === 'mentors') loadMentors();
+  if (name === 'matches') loadMatches();
+  if (name === 'matching') loadBeneficiaries();
+}
+
+// ─── LOAD DATA ───
+async function loadBeneficiaries() {
+  const res = await fetch(AGENT_URL + '/beneficiaries');
+  allBeneficiaries = await res.json();
+  renderBeneficiaries();
+  populateMatchDropdown();
+}
+async function loadMentors() {
+  const res = await fetch(AGENT_URL + '/mentors');
+  allMentors = await res.json();
+  renderMentors();
+}
+async function loadMatches() {
+  const res = await fetch(AGENT_URL + '/matches');
+  allMatches = await res.json();
+  renderMatches();
+}
+
+// ─── RENDER BENEFICIARIES ───
+function renderBeneficiaries() {
+  const search = document.getElementById('b-search').value.toLowerCase();
+  const urgFilter = document.getElementById('b-filter-urgency').value;
+  const statFilter = document.getElementById('b-filter-status').value;
+  const matchedNames = allMatches.map(m => m.BeneficiaryName);
+
+  let rows = allBeneficiaries.filter(b => {
+    const isMatched = matchedNames.includes(b.Name);
+    if (search && !(b.Name||'').toLowerCase().includes(search)) return false;
+    if (urgFilter && (b.Urgency||'').toLowerCase() !== urgFilter) return false;
+    if (statFilter === 'matched' && !isMatched) return false;
+    if (statFilter === 'waiting' && isMatched) return false;
+    return true;
+  });
+
+  const matchedNamesSet = new Set(matchedNames);
+  document.getElementById('beneficiaries-body').innerHTML = rows.length === 0
+    ? '<tr><td colspan="8" class="loading">לא נמצאו זכאים</td></tr>'
+    : rows.map(b => {
+      const isMatched = matchedNamesSet.has(b.Name);
+      const urgBadge = b.Urgency === 'high' || b.Urgency === 'דחוף'
+        ? '<span class="badge badge-red">דחוף</span>'
+        : b.Urgency === 'medium' || b.Urgency === 'בינוני'
+        ? '<span class="badge badge-yellow">בינוני</span>'
+        : '<span class="badge">נמוך</span>';
+      const statusBadge = isMatched
+        ? '<span class="badge badge-green">משודך</span>'
+        : '<span class="badge badge-yellow">ממתין</span>';
+      const actionBtn = isMatched
+        ? '<button class="btn btn-sm" onclick="showTab(\'matching\')">פרטים</button>'
+        : `<button class="btn btn-sm btn-primary" onclick="goToMatching('${b.Name}')">התאם</button>`;
+      return `<tr>
+        <td><strong>${b.Name||''}</strong></td>
+        <td>${b.Age||''}</td>
+        <td>${b.Phone||''}</td>
+        <td>${b.Region||''}</td>
+        <td>${urgBadge}</td>
+        <td>${b.WeeklyHoursNeeded||''}</td>
+        <td>${statusBadge}</td>
+        <td>${actionBtn}</td>
+      </tr>`;
+    }).join('');
+}
+
+// ─── RENDER MENTORS ───
+function renderMentors() {
+  const search = document.getElementById('m-search').value.toLowerCase();
+  const genderFilter = document.getElementById('m-filter-gender').value.toLowerCase();
+
+  let rows = allMentors.filter(m => {
+    if (search && !(m.Name||'').toLowerCase().includes(search)) return false;
+    if (genderFilter && (m.Gender||'').toLowerCase() !== genderFilter) return false;
+    return true;
+  });
+
+  document.getElementById('mentors-body').innerHTML = rows.length === 0
+    ? '<tr><td colspan="7" class="loading">לא נמצאו חונכים</td></tr>'
+    : rows.map(m => {
+      const avail = parseFloat(m.WeeklyHoursAvailable||0);
+      const used = parseFloat(m.WeeklyHoursUsed||0);
+      const free = avail - used;
+      const pct = avail > 0 ? Math.round((used/avail)*100) : 0;
+      const color = free === 0 ? '#8a2e2e' : free < avail/2 ? '#7a5c12' : '#2e5c2e';
+      return `<tr>
+        <td><strong>${m.Name||''}</strong></td>
+        <td>${m.Age||''}</td>
+        <td>${m.Gender||''}</td>
+        <td>${m.Phone||''}</td>
+        <td>${m.Region||''}</td>
+        <td>
+          <div class="hours-bar">
+            <div class="hours-track"><div class="hours-fill" style="width:${pct}%;background:${color}"></div></div>
+            <span style="font-size:12px;color:${color}">${free} / ${avail}</span>
+          </div>
+        </td>
+        <td style="color:var(--text-secondary)">${m.Skills||''}</td>
+      </tr>`;
+    }).join('');
+}
+
+// ─── RENDER MATCHES ───
+function renderMatches() {
+  document.getElementById('matches-body').innerHTML = allMatches.length === 0
+    ? '<tr><td colspan="5" class="loading">אין שידוכים עדיין</td></tr>'
+    : allMatches.map((m, i) => `<tr>
+        <td style="color:var(--text-secondary)">${m.Date||''}</td>
+        <td><strong>${m.BeneficiaryName||''}</strong></td>
+        <td><strong>${m.MentorName||''}</strong></td>
+        <td>${m.HoursAllocated||''}</td>
+        <td><button class="btn btn-sm btn-danger" onclick="confirmDeleteMatch(${i})">בטל שידוך</button></td>
+      </tr>`).join('');
+}
+
+// ─── DELETE MATCH ───
+function confirmDeleteMatch(i) {
+  pendingDeleteMatch = allMatches[i];
+  document.getElementById('delete-match-text').textContent =
+    `ביטול שידוך בין ${pendingDeleteMatch.BeneficiaryName} ל-${pendingDeleteMatch.MentorName}. השעות יוחזרו לחונך.`;
+  document.getElementById('confirm-delete-btn').onclick = () => deleteMatch(pendingDeleteMatch);
+  document.getElementById('modal-confirm-delete').classList.add('open');
+}
+
+async function deleteMatch(match) {
+  try {
+    await fetch(AGENT_URL + '/delete-match', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ beneficiary_name: match.BeneficiaryName, mentor_name: match.MentorName, hours_allocated: parseFloat(match.HoursAllocated||0) })
+    });
+    closeModal('modal-confirm-delete');
+    await loadMatches();
+    await loadMentors();
+  } catch(e) { alert('שגיאה בביטול השידוך'); }
+}
+
+// ─── MATCHING TAB ───
+function populateMatchDropdown() {
+  const dropdown = document.getElementById('match-dropdown');
+  dropdown.innerHTML = allBeneficiaries.map(b =>
+    `<div style="padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:0.5px solid var(--border)" onmousedown="selectMatchBeneficiary('${b.Name}')">${b.Name} · גיל ${b.Age||''} · ${b.Region||''}</div>`
+  ).join('');
+}
+
+function filterMatchDropdown() {
+  const q = document.getElementById('match-search').value.toLowerCase();
+  const filtered = allBeneficiaries.filter(b => (b.Name||'').toLowerCase().includes(q));
+  const dropdown = document.getElementById('match-dropdown');
+  dropdown.innerHTML = filtered.map(b =>
+    `<div style="padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:0.5px solid var(--border)" onmousedown="selectMatchBeneficiary('${b.Name}')">${b.Name} · גיל ${b.Age||''} · ${b.Region||''}</div>`
+  ).join('');
+  openMatchDropdown();
+}
+
+function openMatchDropdown() { document.getElementById('match-dropdown').style.display = 'block'; }
+document.addEventListener('click', e => { if (!e.target.closest('#tab-matching')) document.getElementById('match-dropdown').style.display = 'none'; });
+
+function selectMatchBeneficiary(name) {
+  selectedBeneficiary = allBeneficiaries.find(b => b.Name === name);
+  document.getElementById('match-search').value = name;
+  document.getElementById('match-dropdown').style.display = 'none';
+  const s = selectedBeneficiary;
+  const parts = [s.Age ? 'גיל '+s.Age : null, s.Gender, s.Region, s.Urgency ? 'דחיפות: '+s.Urgency : null,
+    s.MentorGenderRestriction ? 'אילוץ: '+(s.MentorGenderRestriction==='female_only'?'רק חונכת':s.MentorGenderRestriction==='male_only'?'רק חונך':s.MentorGenderRestriction) : null
+  ].filter(Boolean).join(' · ');
+  const summary = document.getElementById('match-beneficiary-summary');
+  summary.innerHTML = `<strong>${s.Name}</strong> · ${parts}${s.NeedsSummary ? '<br><span style="margin-top:4px;display:block">'+s.NeedsSummary+'</span>' : ''}`;
+  summary.style.display = 'block';
+  document.getElementById('run-match-btn').disabled = false;
+  document.getElementById('matching-results').classList.add('hidden');
+}
+
+function goToMatching(name) {
+  showTab('matching');
+  setTimeout(() => selectMatchBeneficiary(name), 100);
+}
+
+async function runMatch() {
+  document.getElementById('matching-loading').classList.remove('hidden');
+  document.getElementById('matching-results').classList.add('hidden');
+  document.getElementById('matching-error').classList.add('hidden');
+  try {
+    const res = await fetch(AGENT_URL + '/match', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ beneficiary: selectedBeneficiary })
+    });
+    const data = await res.json();
+    document.getElementById('matching-loading').classList.add('hidden');
+    renderMatchResults(data);
+  } catch(e) {
+    document.getElementById('matching-loading').classList.add('hidden');
+    document.getElementById('matching-error').textContent = 'שגיאה: '+e.message;
+    document.getElementById('matching-error').classList.remove('hidden');
+  }
+}
+
+function renderMatchResults(data) {
+  const resultsEl = document.getElementById('matching-results');
+  const headerEl = document.getElementById('matching-header');
+  const cardsEl = document.getElementById('match-cards');
+  cardsEl.innerHTML = '';
+
+  if (data.already_matched) {
+    headerEl.innerHTML = '';
+    cardsEl.innerHTML = `<div class="already-matched"><div class="icon">🔒</div><strong>זכאי זה כבר משודך</strong><span>משודך עם: ${data.existing_mentor}<br>לביטול השידוך עבור ללשונית "שידוכים"</span></div>`;
+    resultsEl.classList.remove('hidden');
+    return;
+  }
+
+  if (data.matches.length === 0) {
+    headerEl.innerHTML = '';
+    cardsEl.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-secondary)"><div style="font-size:28px;margin-bottom:8px">🔍</div>לא נמצאו חונכים מתאימים${data.filtered_out > 0 ? '<br><span style="font-size:12px">'+data.filtered_out+' חונכים סוננו בגלל אילוצים</span>' : ''}</div>`;
+    resultsEl.classList.remove('hidden');
+    return;
+  }
+
+  currentMatches = data.matches;
+  headerEl.innerHTML = `נמצאו <strong>${data.matches.length}</strong> חונכים מתאימים${data.filtered_out > 0 ? ' · '+data.filtered_out+' סוננו' : ''} · ממוינים לפי התאמה`;
+
+  data.matches.forEach((mentor, i) => {
+    const avail = parseFloat(mentor.WeeklyHoursAvailable||0);
+    const used = parseFloat(mentor.WeeklyHoursUsed||0);
+    const free = avail - used;
+    const card = document.createElement('div');
+    card.className = 'match-card';
+    card.innerHTML = `
+      <div class="match-card-header">
+        <div class="match-card-name">${mentor.Name||''}</div>
+        <div class="match-score">התאמה ${mentor.match_score}/10</div>
+      </div>
+      <div class="match-reason">${mentor.match_reason||''}</div>
+      <div class="match-details">
+        ${mentor.Age ? `<span class="detail-label">גיל</span><span>${mentor.Age}</span>` : ''}
+        ${mentor.Gender ? `<span class="detail-label">מגדר</span><span>${mentor.Gender}</span>` : ''}
+        ${mentor.Region ? `<span class="detail-label">אזור</span><span>${mentor.Region}</span>` : ''}
+        ${mentor.Phone ? `<span class="detail-label">טלפון</span><span>${mentor.Phone}</span>` : ''}
+        ${avail ? `<span class="detail-label">שעות פנויות</span><span>${free} מתוך ${avail}</span>` : ''}
+        ${mentor.Skills ? `<span class="detail-label">יכולות</span><span>${mentor.Skills}</span>` : ''}
+        ${mentor.Hobbies ? `<span class="detail-label">תחביבים</span><span>${mentor.Hobbies}</span>` : ''}
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:12px" id="match-btn-${i}" onclick="doMatch(${i}, this)">שדך</button>
+      <div id="match-success-${i}" class="success-msg" style="display:none;margin-top:8px;text-align:center"></div>`;
+    cardsEl.appendChild(card);
+  });
+  resultsEl.classList.remove('hidden');
+}
+
+async function doMatch(i, btn) {
+  const mentor = currentMatches[i];
+  const hoursAllocated = parseFloat(selectedBeneficiary.WeeklyHoursNeeded||0);
+  const hoursUsed = parseFloat(mentor.WeeklyHoursUsed||0);
+  btn.disabled = true; btn.textContent = 'משדך...';
+  try {
+    const res = await fetch(CREATE_MATCH_URL, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ beneficiary_name: selectedBeneficiary.Name, mentor_name: mentor.Name, hours_allocated: hoursAllocated, new_hours_used: hoursUsed + hoursAllocated, notes: '' })
+    });
+    if (!res.ok) throw new Error('שגיאת שרת');
+    btn.style.display = 'none';
+    document.getElementById('match-success-'+i).style.display = 'block';
+    document.getElementById('match-success-'+i).textContent = '✓ שודך בהצלחה! '+mentor.Name+' ← '+selectedBeneficiary.Name;
+    await loadMatches();
+  } catch(e) { alert('שגיאה: '+e.message); btn.disabled=false; btn.textContent='שדך'; }
+}
+
+// ─── MODALS ───
+function openAddBeneficiary() { showStep('add-b','input'); document.getElementById('b-description').value=''; document.getElementById('modal-add-beneficiary').classList.add('open'); }
+function openAddMentor() { showStep('add-m','input'); document.getElementById('m-description').value=''; document.getElementById('modal-add-mentor').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function showStep(prefix, step) {
+  document.getElementById(prefix+'-step-input').classList.toggle('hidden', step !== 'input');
+  document.getElementById(prefix+'-step-confirm').classList.toggle('hidden', step !== 'confirm');
+}
+
+// ─── EXTRACT BENEFICIARY ───
+async function extractBeneficiary() {
+  const desc = document.getElementById('b-description').value.trim();
+  if (!desc) return;
+  const errEl = document.getElementById('add-b-error');
+  errEl.classList.add('hidden');
+  try {
+    const res = await fetch(EXTRACT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({description: desc, kind:'beneficiary'}) });
+    if (!res.ok) throw new Error('שגיאת שרת');
+    let data = await res.json();
+    if (Array.isArray(data)) data = data[0];
+    document.getElementById('b-name').value = data.name||'';
+    document.getElementById('b-age').value = data.age||'';
+    document.getElementById('b-gender').value = data.gender||'';
+    document.getElementById('b-phone').value = data.phone||'';
+    document.getElementById('b-region').value = data.region||'';
+    document.getElementById('b-hours').value = data.weekly_hours_needed||'';
+    document.getElementById('b-urgency').value = data.urgency||'';
+    document.getElementById('b-needs-summary').value = data.needs_summary||'';
+    if (data.mentor_age_restriction) document.getElementById('b-age-restriction').value = data.mentor_age_restriction;
+    const cSection = document.getElementById('b-constraint-section');
+    if (data.mentor_gender_restriction) {
+      document.getElementById('b-constraint-text').textContent = 'אילוץ קריטי: '+(data.mentor_gender_restriction==='male_only'?'רק חונך גבר':'רק חונכת אישה');
+      document.getElementById('b-constraint-confirm').checked = false;
+      cSection.classList.remove('hidden');
+      document.getElementById('b-save-btn').disabled = true;
+      document.getElementById('b-constraint-confirm').onchange = e => { document.getElementById('b-save-btn').disabled = !e.target.checked; };
+    } else { cSection.classList.add('hidden'); document.getElementById('b-save-btn').disabled = false; }
+    if (data.confidence_notes?.length) document.getElementById('b-notes').innerHTML = '<strong>נקודות לבדיקה:</strong><br>'+data.confidence_notes.map(n=>'• '+n).join('<br>');
+    else document.getElementById('b-notes').innerHTML = '';
+    showStep('add-b','confirm');
+  } catch(e) { errEl.textContent = 'שגיאה: '+e.message; errEl.classList.remove('hidden'); }
+}
+
+// ─── SAVE BENEFICIARY ───
+async function saveBeneficiary() {
+  const btn = document.getElementById('b-save-btn');
+  btn.disabled = true; btn.textContent = 'שומרת...';
+  try {
+    const res = await fetch(SAVE_BENEFICIARY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+      name: document.getElementById('b-name').value, age: document.getElementById('b-age').value,
+      gender: document.getElementById('b-gender').value, phone: document.getElementById('b-phone').value,
+      region: document.getElementById('b-region').value, weekly_hours_needed: document.getElementById('b-hours').value,
+      urgency: document.getElementById('b-urgency').value, needs_summary: document.getElementById('b-needs-summary').value,
+      mentor_gender_restriction: document.getElementById('b-constraint-section').classList.contains('hidden') ? null : (document.getElementById('b-constraint-text').textContent.includes('גבר') ? 'male_only' : 'female_only'),
+      mentor_age_restriction: document.getElementById('b-age-restriction').value || null,
+      other_constraints: []
+    })});
+    if (!res.ok) throw new Error('שגיאת שרת');
+    closeModal('modal-add-beneficiary');
+    await loadBeneficiaries();
+  } catch(e) {
+    document.getElementById('add-b-save-error').textContent = 'שגיאה: '+e.message;
+    document.getElementById('add-b-save-error').classList.remove('hidden');
+  } finally { btn.disabled = false; btn.textContent = 'אשרי ושמרי'; }
+}
+
+// ─── EXTRACT MENTOR ───
+async function extractMentor() {
+  const desc = document.getElementById('m-description').value.trim();
+  if (!desc) return;
+  const errEl = document.getElementById('add-m-error');
+  errEl.classList.add('hidden');
+  try {
+    const res = await fetch(EXTRACT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({description: desc, kind:'mentor'}) });
+    if (!res.ok) throw new Error('שגיאת שרת');
+    let data = await res.json();
+    if (Array.isArray(data)) data = data[0];
+    document.getElementById('m-name').value = data.name||'';
+    document.getElementById('m-age').value = data.age||'';
+    document.getElementById('m-gender').value = data.gender||'';
+    document.getElementById('m-phone').value = data.phone||'';
+    document.getElementById('m-region').value = data.region||'';
+    document.getElementById('m-hours').value = data.weekly_hours_available||'';
+    document.getElementById('m-skills').value = Array.isArray(data.skills)?data.skills.join(', '):(data.skills||'');
+    document.getElementById('m-availability').value = data.availability||'';
+    document.getElementById('m-hobbies').value = Array.isArray(data.hobbies)?data.hobbies.join(', '):(data.hobbies||'');
+    if (data.confidence_notes?.length) document.getElementById('m-notes').innerHTML = '<strong>נקודות לבדיקה:</strong><br>'+data.confidence_notes.map(n=>'• '+n).join('<br>');
+    else document.getElementById('m-notes').innerHTML = '';
+    showStep('add-m','confirm');
+  } catch(e) { errEl.textContent = 'שגיאה: '+e.message; errEl.classList.remove('hidden'); }
+}
+
+// ─── SAVE MENTOR ───
+async function saveMentor() {
+  const btn = document.getElementById('m-save-btn');
+  btn.disabled = true; btn.textContent = 'שומרת...';
+  try {
+    const res = await fetch(SAVE_MENTOR_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+      name: document.getElementById('m-name').value, age: document.getElementById('m-age').value,
+      gender: document.getElementById('m-gender').value, phone: document.getElementById('m-phone').value,
+      region: document.getElementById('m-region').value, weekly_hours_available: document.getElementById('m-hours').value,
+      weekly_hours_used: '0', skills: document.getElementById('m-skills').value,
+      availability: document.getElementById('m-availability').value, hobbies: document.getElementById('m-hobbies').value
+    })});
+    if (!res.ok) throw new Error('שגיאת שרת');
+    closeModal('modal-add-mentor');
+    await loadMentors();
+  } catch(e) {
+    document.getElementById('add-m-save-error').textContent = 'שגיאה: '+e.message;
+    document.getElementById('add-m-save-error').classList.remove('hidden');
+  } finally { btn.disabled = false; btn.textContent = 'אשרי ושמרי'; }
+}
+
+// ─── INIT ───
+loadBeneficiaries();
+loadMatches();
+</script>
+</body>
+</html>

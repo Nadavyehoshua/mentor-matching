@@ -1,0 +1,8 @@
+.env
+.env.bak
+service-account.json
+__pycache__/
+*.pyc
+test-extract.json
+test-match.json
+*.bak

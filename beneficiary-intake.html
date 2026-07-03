@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>קליטת זכאי חדש</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --surface: #ffffff;
+    --border: #e2ddd5;
+    --text: #2b2925;
+    --text-secondary: #6b6760;
+    --accent: #5b6b4f;
+    --accent-hover: #4a5840;
+    --warning-bg: #fdf3e3;
+    --warning-border: #e8c468;
+    --warning-text: #7a5c12;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 32px 16px; line-height: 1.6; }
+  .container { max-width: 560px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  .subtitle { color: var(--text-secondary); font-size: 14px; margin: 0 0 28px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  textarea { width: 100%; min-height: 140px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 15px; resize: vertical; background: var(--bg); }
+  textarea:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .hint { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
+  button { font-family: inherit; font-size: 15px; font-weight: 600; padding: 12px 20px; border-radius: 8px; border: none; cursor: pointer; width: 100%; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { background: #b8b3a8; cursor: not-allowed; }
+  .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 8px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .field { margin-bottom: 14px; }
+  .field input { width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+  .field-label { font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px; display: block; }
+  .constraint-box { background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 8px; padding: 14px; margin: 16px 0; }
+  .constraint-box p { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--warning-text); }
+  .constraint-box label { display: flex; align-items: center; gap: 8px; font-weight: 400; font-size: 14px; margin: 0; cursor: pointer; }
+  .notes { font-size: 13px; color: var(--text-secondary); margin-top: 14px; }
+  .notes ul { margin: 6px 0 0; padding-right: 18px; }
+  .notes li { margin-bottom: 4px; }
+  .hidden { display: none; }
+  .loading { text-align: center; color: var(--text-secondary); font-size: 14px; padding: 12px; }
+  .error-box { background: #fdeaea; border: 1px solid #e8a8a8; color: #8a2e2e; border-radius: 8px; padding: 12px 14px; font-size: 14px; margin-bottom: 16px; }
+  .success-box { background: #eaf3e8; border: 1px solid #a8d4a0; color: #2e5c2e; border-radius: 8px; padding: 14px; font-size: 14px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>קליטת זכאי חדש</h1>
+  <p class="subtitle">תארי את המצב בחופשיות, בלי צורך בסדר או מבנה קבוע.</p>
+
+  <div id="step-input" class="card">
+    <label for="description">תיאור הזכאי</label>
+    <textarea id="description" placeholder="לדוגמה: דנה, בת 16, טלפון 050-1234567, מתמודדת עם חרדות, מתגוררת בחדרה, צריכה חונכת אישה, 4 שעות בשבוע, דחוף..."></textarea>
+    <p class="hint">כתבי כמו שנוח לך — המערכת תזהה את הפרטים הרלוונטיים.</p>
+    <br>
+    <button class="btn-primary" onclick="extractData()">המשך לבדיקת הפרטים</button>
+  </div>
+
+  <div id="step-loading" class="card hidden">
+    <p class="loading">קוראת את התיאור...</p>
+  </div>
+
+  <div id="step-error" class="hidden">
+    <div class="error-box" id="error-message"></div>
+    <button class="btn-secondary" onclick="backToInput()">חזרה</button>
+  </div>
+
+  <div id="step-confirm" class="card hidden">
+    <label>בדיקת הפרטים</label>
+
+    <div class="field-row">
+      <div class="field">
+        <span class="field-label">שם</span>
+        <input type="text" id="f-name">
+      </div>
+      <div class="field">
+        <span class="field-label">גיל</span>
+        <input type="text" id="f-age">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <span class="field-label">מגדר</span>
+        <input type="text" id="f-gender">
+      </div>
+      <div class="field">
+        <span class="field-label">טלפון</span>
+        <input type="text" id="f-phone" placeholder="050-0000000">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <span class="field-label">אזור / ישוב</span>
+        <input type="text" id="f-region">
+      </div>
+      <div class="field">
+        <span class="field-label">שעות שבועיות נדרשות</span>
+        <input type="number" id="f-hours" min="1" max="40" placeholder="0">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <span class="field-label">דחיפות</span>
+        <input type="text" id="f-urgency">
+      </div>
+      <div class="field">
+        <span class="field-label">תקציר הצורך</span>
+        <input type="text" id="f-needs-summary">
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="field-label">אילוץ גיל חונך</span>
+      <select id="f-age-restriction" style="width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit">
+        <option value="">ללא הגבלת גיל</option>
+        <option value="young">רק חונך צעיר (עד 35)</option>
+        <option value="older">רק חונך מבוגר (מעל 35)</option>
+      </select>
+    </div>
+
+    <div id="constraint-section" class="hidden">
+      <div class="constraint-box">
+        <p id="constraint-text"></p>
+        <label>
+          <input type="checkbox" id="constraint-confirm">
+          מאשרת את האילוץ הזה
+        </label>
+      </div>
+    </div>
+
+    <div id="notes-section" class="notes hidden">
+      <strong>נקודות לבדיקה:</strong>
+      <ul id="notes-list"></ul>
+    </div>
+
+    <button class="btn-primary" id="save-btn" onclick="saveData()">אשרי ושמרי</button>
+    <button class="btn-secondary" onclick="backToInput()">חזרה לעריכה</button>
+  </div>
+
+  <div id="step-success" class="hidden">
+    <div class="success-box">הזכאי נשמר בהצלחה.</div>
+    <br>
+    <button class="btn-secondary" onclick="resetForm()">הוספת זכאי נוסף</button>
+  </div>
+</div>
+
+<script>
+  const EXTRACT_WEBHOOK_URL = "https://nny.app.n8n.cloud/webhook/intake-beneficiary";
+  const SAVE_WEBHOOK_URL = "https://nny.app.n8n.cloud/webhook/save-beneficiary";
+
+  let lastExtractedData = null;
+
+  function showStep(stepId) {
+    ["step-input","step-loading","step-error","step-confirm","step-success"].forEach(id => {
+      document.getElementById(id).classList.toggle("hidden", id !== stepId);
+    });
+  }
+
+  async function extractData() {
+    const description = document.getElementById("description").value.trim();
+    if (!description) { alert("נא להזין תיאור לפני שממשיכים."); return; }
+    showStep("step-loading");
+    try {
+      const response = await fetch(EXTRACT_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description, kind: "beneficiary" })
+      });
+      if (!response.ok) throw new Error("השרת החזיר שגיאה (" + response.status + ")");
+      let data = await response.json();
+      if (Array.isArray(data)) data = data[0];
+      lastExtractedData = data;
+      populateConfirmStep(data);
+      showStep("step-confirm");
+    } catch (err) {
+      document.getElementById("error-message").textContent = "לא הצלחנו לקרוא את התיאור: " + err.message;
+      showStep("step-error");
+    }
+  }
+
+  function populateConfirmStep(data) {
+    document.getElementById("f-name").value = data.name || "";
+    document.getElementById("f-age").value = data.age ?? "";
+    document.getElementById("f-gender").value = data.gender || "";
+    document.getElementById("f-phone").value = data.phone || "";
+    document.getElementById("f-region").value = data.region || "";
+    document.getElementById("f-hours").value = data.weekly_hours_needed ?? "";
+    document.getElementById("f-urgency").value = data.urgency || "";
+    document.getElementById("f-needs-summary").value = data.needs_summary || "";
+    if (data.mentor_age_restriction) {
+      document.getElementById("f-age-restriction").value = data.mentor_age_restriction;
+    }
+
+    const constraintSection = document.getElementById("constraint-section");
+    const constraintText = document.getElementById("constraint-text");
+    const constraintCheckbox = document.getElementById("constraint-confirm");
+
+    if (data.mentor_gender_restriction) {
+      const label = data.mentor_gender_restriction === "male_only" ? "רק חונך גבר"
+        : data.mentor_gender_restriction === "female_only" ? "רק חונכת אישה"
+        : data.mentor_gender_restriction;
+      constraintText.textContent = "אילוץ קריטי שזוהה: " + label;
+      constraintCheckbox.checked = false;
+      constraintSection.classList.remove("hidden");
+    } else {
+      constraintSection.classList.add("hidden");
+    }
+
+    const notesSection = document.getElementById("notes-section");
+    const notesList = document.getElementById("notes-list");
+    notesList.innerHTML = "";
+    if (data.confidence_notes && data.confidence_notes.length > 0) {
+      data.confidence_notes.forEach(note => {
+        const li = document.createElement("li");
+        li.textContent = note;
+        notesList.appendChild(li);
+      });
+      notesSection.classList.remove("hidden");
+    } else {
+      notesSection.classList.add("hidden");
+    }
+    updateSaveButtonState();
+  }
+
+  function updateSaveButtonState() {
+    const constraintSection = document.getElementById("constraint-section");
+    const saveBtn = document.getElementById("save-btn");
+    if (!constraintSection.classList.contains("hidden")) {
+      const checkbox = document.getElementById("constraint-confirm");
+      saveBtn.disabled = !checkbox.checked;
+      checkbox.addEventListener("change", () => { saveBtn.disabled = !checkbox.checked; });
+    } else {
+      saveBtn.disabled = false;
+    }
+  }
+
+  async function saveData() {
+    const payload = {
+      name: document.getElementById("f-name").value,
+      age: document.getElementById("f-age").value,
+      gender: document.getElementById("f-gender").value,
+      phone: document.getElementById("f-phone").value,
+      region: document.getElementById("f-region").value,
+      weekly_hours_needed: document.getElementById("f-hours").value,
+      urgency: document.getElementById("f-urgency").value,
+      needs_summary: document.getElementById("f-needs-summary").value,
+      mentor_gender_restriction: lastExtractedData ? lastExtractedData.mentor_gender_restriction : null,
+      mentor_age_restriction: document.getElementById("f-age-restriction").value || null,
+      other_constraints: lastExtractedData ? lastExtractedData.other_constraints : []
+    };
+    const saveBtn = document.getElementById("save-btn");
+    saveBtn.disabled = true;
+    saveBtn.textContent = "שומרת...";
+    try {
+      const response = await fetch(SAVE_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error("השרת החזיר שגיאה (" + response.status + ")");
+      showStep("step-success");
+    } catch (err) {
+      alert("השמירה נכשלה: " + err.message);
+      saveBtn.disabled = false;
+      saveBtn.textContent = "אשרי ושמרי";
+    }
+  }
+
+  function backToInput() { showStep("step-input"); }
+  function resetForm() {
+    document.getElementById("description").value = "";
+    lastExtractedData = null;
+    const saveBtn = document.getElementById("save-btn");
+    saveBtn.disabled = false;
+    saveBtn.textContent = "אשרי ושמרי";
+    showStep("step-input");
+  }
+</script>
+</body>
+</html>
