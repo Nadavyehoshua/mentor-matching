@@ -199,7 +199,7 @@ if(sessionStorage.getItem('auth') === '1'){
     <div class="card"><div class="table-wrap">
       <table>
         <thead><tr>
-          <th>שם</th><th>גיל</th><th>מגדר</th><th>טלפון</th><th>אזור</th><th>שעות פנויות</th><th>יכולות</th>
+          <th>שם</th><th>גיל</th><th>מגדר</th><th>טלפון</th><th>אזור</th><th>שעות פנויות</th><th>יכולות</th><th></th>
         </tr></thead>
         <tbody id="mentors-body"><tr><td colspan="7" class="loading">טוען...</td></tr></tbody>
       </table>
@@ -454,6 +454,7 @@ function renderMentors() {
       const free = avail - used;
       const pct = avail > 0 ? Math.round((used/avail)*100) : 0;
       const color = free === 0 ? '#8a2e2e' : free < avail/2 ? '#7a5c12' : '#2e5c2e';
+      const isMatchedMentor = allMatches.some(mt => mt.MentorName === m.Name);
       return `<tr>
         <td><strong>${m.Name||''}</strong></td>
         <td>${m.Age||''}</td>
@@ -467,6 +468,7 @@ function renderMentors() {
           </div>
         </td>
         <td style="color:var(--text-secondary)">${m.Skills||''}</td>
+        <td><button class="btn btn-sm btn-danger" onclick="confirmDeletePerson('mentor','${m.Name}','${isMatchedMentor}')">מחק</button></td>
       </tr>`;
     }).join('');
 }
@@ -485,6 +487,26 @@ function renderMatches() {
 }
 
 // ─── DELETE MATCH ───
+async function confirmDeletePerson(type, name, isMatched) {
+  const typeName = type === 'beneficiary' ? 'זכאי' : 'חונך';
+  const matchWarning = (isMatched === 'true' || isMatched === true)
+    ? '\n⚠️ יש שידוך פעיל — הוא יבוטל אוטומטית.' : '';
+  if (!confirm(`למחוק את ${name}?${matchWarning}`)) return;
+
+  try {
+    const endpoint = type === 'beneficiary' ? '/delete-beneficiary' : '/delete-mentor';
+    const res = await fetch(AGENT_URL + endpoint, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name })
+    });
+    if (!res.ok) throw new Error('שגיאת שרת');
+    const data = await res.json();
+    if (type === 'beneficiary') { await loadBeneficiaries(); await loadMatches(); }
+    else { await loadMentors(); await loadMatches(); }
+    if (data.match_cancelled) alert(`השידוך של ${name} בוטל אוטומטית.`);
+  } catch(e) { alert('שגיאה במחיקה: ' + e.message); }
+}
+
 function confirmDeleteMatch(i) {
   pendingDeleteMatch = allMatches[i];
   document.getElementById('delete-match-text').textContent =
